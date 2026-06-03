@@ -1,5 +1,5 @@
 """
-WorldGuessr - Konum Yakalayıcı
+WorldGuessr - Location Tracker
  
 """
 
@@ -66,10 +66,7 @@ def find_addresses(obj, depth=0):
             results.extend(find_addresses(item, depth + 1))
     return list(dict.fromkeys(results))
 
-# Sayfa yüklenmeden önce çalışır.
-# window.L setter ile bekliyoruz — L set edilir edilmez prototype'ı hookla.
-# window.L.map override DEĞİL — o modül referansını değiştirmez.
-# L.Map.prototype.initialize override + addInitHook → ikisi de shared, çalışır.
+ 
 INIT_SCRIPT = """
 (function() {
     function hookLeaflet(L) {
@@ -77,36 +74,33 @@ INIT_SCRIPT = """
         if (L.__hunterHooked) return true;
         L.__hunterHooked = true;
 
-        // Yöntem 1: addInitHook — map oluşturulurken çağrılır
+       
         try {
             L.Map.addInitHook(function() {
                 window.__leafletMap = this;
-                console.log('[Hunter] addInitHook: map yakalandı!');
             });
         } catch(e) {}
 
-        // Yöntem 2: prototype.initialize override
+        
         try {
             var origInit = L.Map.prototype.initialize;
             L.Map.prototype.initialize = function(id, options) {
                 var r = origInit.call(this, id, options);
                 window.__leafletMap = this;
-                console.log('[Hunter] prototype.initialize: map yakalandı!');
                 return r;
             };
         } catch(e) {}
-
-        console.log('[Hunter] Leaflet hooked!');
+        
         return true;
     }
 
-    // L zaten yüklüyse direkt hook'la
+  
     if (window.L) {
         hookLeaflet(window.L);
         return;
     }
 
-    // L henüz yüklenmediyse — setter ile bekle
+     
     var _L = undefined;
     Object.defineProperty(window, 'L', {
         configurable: true,
@@ -114,7 +108,6 @@ INIT_SCRIPT = """
         get: function() { return _L; },
         set: function(val) {
             _L = val;
-            console.log('[Hunter] window.L set edildi, hook kuruluyor...');
             hookLeaflet(val);
         }
     });
@@ -136,7 +129,6 @@ CLICK_JS = """
             latlng: latlng,
             originalEvent: new MouseEvent('click', { bubbles: true })
         });
-        console.log('[Hunter] click fired:', lat, lng);
         return 'OK';
     } catch(e) {
         return 'FIRE_ERR: ' + e.message;
@@ -149,7 +141,7 @@ async def inject_click(page, lat, lng):
     try:
         result = await page.evaluate(js)
         if result == "OK":
-            print(f"  ✅ Tıklatıldı!")
+            print(f"  ✅ Clicked!")
             return True
         print(f"  ⚠️  Sonuç: {result}")
     except Exception as e:
@@ -181,13 +173,13 @@ async def on_response(response, page):
         lat, lng = coords
         label = addresses[0] if addresses else f"{lat:.4f}, {lng:.4f}"
 
-        print("\n" + "═" * 52)
-        print("  📍 KONUM YAKALANDI")
+        print("\n" + "═" * 55)
+        print("   LOCATION DETECTED")
         print("═" * 52)
-        print(f"  Koordinat : {lat:.6f}, {lng:.6f}")
-        print(f"  Ülke      : {country}")
-        print(f"  Adres     : {label}")
-        print("═" * 52)
+        print(f"  Coordinate : {lat:.6f}, {lng:.6f}")
+        print(f"  Country      : {country}")
+        print(f"  Address     : {label}")
+        print("═" * 55)
 
         await inject_click(page, lat, lng)
 
@@ -200,7 +192,7 @@ async def main():
 ║      WorldGuessr Hunter       ║
 ║       ║
 ╚══════════════════════════════════════════╝
-Durdurmak için: Ctrl+C
+To stop: Ctrl+C
 """)
 
     async with async_playwright() as pw:
@@ -220,14 +212,14 @@ Durdurmak için: Ctrl+C
             ),
         )
 
-        # Sayfa yüklenmeden önce hook'u kur
+         
         await context.add_init_script(INIT_SCRIPT)
 
         page = await context.new_page()
         page.on("response", lambda res: asyncio.ensure_future(on_response(res, page)))
 
         await page.goto("https://worldguessr.com", wait_until="domcontentloaded")
-        print("Tarayıcı açıldı. Oyunu başlat...\n")
+        print("The browser has opened. Start the game...\n")
 
         try:
             await page.wait_for_event("close", timeout=0)
@@ -241,4 +233,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\nDurduruldu.")
+        print("\Suspended.")
