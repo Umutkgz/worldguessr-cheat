@@ -211,7 +211,7 @@ Converting GPS coordinates to screen pixels requires knowing the current map zoo
 
 ### Why strip `)]}'\n`?
 
-Google prefixes JSON responses from internal APIs with this string to prevent [XSSI attacks](https://security.stackexchange.com/questions/110539). A browser's `fetch()` call receives the full text and strips it before parsing. We replicate that step manually.
+Google prefixes JSON responses from internal APIs with this string to prevent [XSSI attacks](https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/11-Client_Side_Testing/13-Testing_for_Cross_Site_Script_Inclusion). A browser's `fetch()` call receives the full text and strips it before parsing. We replicate that step manually.
 
 ---
 
