@@ -243,7 +243,7 @@ Run `playwright install-deps chromium` to install missing system libraries.
 
 ---
 
-## Disclaimer
+## Disclaimeriii
 
 This project is intended for educational and research purposes — specifically to demonstrate browser automation, network interception, and JavaScript runtime hooking techniques. Use it responsibly. Running automation on online multiplayer games may violate those games' terms of service.
 
